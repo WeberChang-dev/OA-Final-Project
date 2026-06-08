@@ -78,31 +78,60 @@ def run_figure_2_grid_search():
     # Setup grid search matching Figure 2 parameters
     h_vals = np.arange(0.5, 3.1, 0.1)
     grid_size = len(h_vals)
-    results = np.zeros((grid_size, grid_size))
+    delta = 1e-4
     
     print(f"Running grid search over {grid_size}x{grid_size} ({grid_size**2}) stepsize pairs...")
-    
+    h1_coords = []
+    h2_coords = []
+    certified = []
     for i, h1 in enumerate(tqdm(h_vals)):
         for j, h2 in enumerate(h_vals):
             # Matrix coordinates: rows index h2 (Y-axis), cols index h1 (X-axis)
-            is_straightforward = check_straightforward(h1, h2, L=1.0, D=1.0, delta=1e-4)
-            results[j, i] = 1.0 if is_straightforward else 0.0                 
-            
-    # Plotting the resulting certified region
-    plt.figure(figsize=(7, 6))
-    plt.imshow(results, origin='lower', extent=[0.5, 3.0, 0.5, 3.0], 
-               cmap='Blues', alpha=0.7)
+            is_straightforward = check_straightforward(h1, h2, L=1.0, D=1.0, delta=delta)
+            h1_coords.append(h1)
+            h2_coords.append(h2)
+            certified.append(is_straightforward)
+
+    h1_coords = np.array(h1_coords)
+    h2_coords = np.array(h2_coords)
+    certified = np.array(certified)
     
-    plt.title("GD Stepsize Patterns Certified as Straightforward (Figure 2)")
+    plt.figure(figsize=(7, 6))
+    
+    # Plot only the certified configurations, dropping uncertified combinations completely
+    plt.scatter(h1_coords[certified], h2_coords[certified], 
+                color='#1f77b4', marker='o', s=45, alpha=0.9, label="Certified Straightforward")
+    
+    # Layout and labels
+    plt.title(rf"GD Step Patterns (Certified Dots Only, $\Delta = {delta}$)", fontsize=11)
     plt.xlabel("$h_1$")
     plt.ylabel("$h_2$")
-    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.xlim(0.4, 3.2)
+    plt.ylim(0.4, 3.2)
+    plt.grid(True, linestyle=':', alpha=0.5)
     
-    # Highlight specific notable points mentioned in the paper (e.g., h = (2.9, 1.5))
-    if 2.9 in h_vals and 1.5 in h_vals:
-        plt.scatter([2.9], [1.5], color='red', marker='*', s=150, label="Stable long-step (2.9, 1.5)")
-        plt.legend()
-        
+    # Reference stepsize threshold indicator lines
+    plt.axhline(1.0, color='red', linestyle='--', alpha=0.4, label="$h=1.0$ Standard Step")
+    plt.axvline(1.0, color='red', linestyle='--', alpha=0.4)
+    
+    plt.legend(loc='upper right', framealpha=0.9)
+    plt.show()               
+            
+    # # Plotting the resulting certified region
+    # plt.figure(figsize=(7, 6))
+    # plt.imshow(results, origin='lower', extent=[0.5, 3.0, 0.5, 3.0], 
+    #            cmap='YlGnBu', alpha=0.85)
+    
+    # plt.title(f"GD Stepsize Patterns Certified as Straightforward, $\Delta = {delta}$)")
+    # plt.xlabel("$h_1$")
+    # plt.ylabel("$h_2$")
+    # plt.grid(True, linestyle='--', alpha=0.5)
+    
+    # # Highlight the standard h=1.0 bound
+    # plt.axhline(1.0, color='red', linestyle=':', alpha=0.6, label="$h=1.0$ Standard Stepsize")
+    # plt.axvline(1.0, color='red', linestyle=':', alpha=0.6)
+    # plt.legend(loc='upper right')
+    
     plt.show()
 
 if __name__ == "__main__":
